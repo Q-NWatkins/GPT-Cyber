@@ -1,9 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Calendar</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberTracker - Calendar</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
-    <h1>Upcoming Cyber Events</h1>
+    <div class="nav-bar">
+        <a href="/">Home</a>
+        <a href="/calendar">Calendar</a>
+        <a href="/crypto">Crypto</a>
+        <a href="/about">About</a>
+    </div>
+
+    <div class="container">
+        <h2>Interactive Calendar</h2>
+        <div id="calendar"></div>
+        <div id="news-results" class="news-container"></div>
+    </div>
+    <script src="/static/js/scripts.js"></script>
 </body>
 </html>

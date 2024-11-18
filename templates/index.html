@@ -3,41 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cybersecurity Tracker</title>
+    <title>CyberTracker - Home</title>
     <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
-    <div class="home-container">
-        <h1 class="title">Cybersecurity Tracker</h1>
-        <input type="text" class="search-bar" id="searchInput" placeholder="Search for a company, breach, or IP address...">
-        <button class="search-button" onclick="search()">Search</button>
-        <h2 class="latest-news-title">Latest News</h2>
-        <div id="news-container" class="news-container"></div>
+    <div class="nav-bar">
+        <a href="/">Home</a>
+        <a href="/calendar">Calendar</a>
+        <a href="/crypto">Crypto</a>
+        <a href="/about">About</a>
     </div>
-    <script>
-        async function search() {
-            const query = document.getElementById('searchInput').value;
-            const response = await fetch(`/api/search?query=${encodeURIComponent(query)}`);
-            const results = await response.json();
-            const container = document.getElementById('news-container');
-            container.innerHTML = '';
 
-            if (results.length === 0) {
-                container.innerHTML = '<p>No results found.</p>';
-                return;
-            }
-
-            results.forEach(item => {
-                const newsItem = document.createElement('div');
-                newsItem.className = 'news-item';
-                newsItem.innerHTML = `
-                    <h3>${item.title}</h3>
-                    <p>${JSON.stringify(item.description)}</p>
-                    <a href="${item.url}" target="_blank">Learn more</a>
-                `;
-                container.appendChild(newsItem);
-            });
-        }
-    </script>
+    <div class="container">
+        <h1>Welcome to CyberTracker</h1>
+        <p>Your one-stop solution for cybersecurity insights, threat analysis, and updates.</p>
+        <form id="search-form">
+            <input type="text" id="search-input" placeholder="Search for a device, company, or vulnerability..." />
+            <button type="submit">Search</button>
+        </form>
+        <div id="search-results"></div>
+    </div>
+    <script src="/static/js/scripts.js"></script>
 </body>
 </html>
