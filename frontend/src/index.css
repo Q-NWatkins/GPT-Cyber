@@ -1,0 +1,87 @@
+/* frontend/src/index.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles */
+body {
+    @apply transition-colors duration-500;
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+
+header {
+    @apply flex justify-between items-center w-full mb-8;
+}
+
+nav a {
+    @apply text-white hover:text-teal-400 mx-2 transition-colors duration-300;
+}
+
+input::placeholder {
+    @apply text-gray-400;
+}
+
+button {
+    @apply flex items-center justify-center;
+}
+
+li a {
+    @apply text-teal-400 hover:underline;
+}
+
+li p {
+    @apply text-gray-400 text-sm;
+}
+
+.max-w-4xl {
+    @apply mx-auto;
+}
+
+.shadow-md {
+    @apply shadow-lg;
+}
+
+/* Hover Effects for Links */
+a:hover {
+    @apply transform scale-105;
+}
+
+/* Calendar Styles */
+.react-calendar {
+    @apply bg-gray-800 text-white rounded-lg p-4 shadow-lg;
+}
+
+.react-calendar__tile--active {
+    @apply bg-teal-500 text-white;
+}
+
+.react-calendar__tile--hover {
+    @apply bg-teal-400;
+}
+
+.react-calendar__navigation button {
+    @apply text-teal-400;
+}
+
+.react-calendar__navigation button:hover {
+    @apply text-teal-500;
+}
+
+/* Additional Enhancements */
+ul li:hover {
+    @apply bg-teal-800;
+}
+
+form input {
+    @apply bg-gray-800 border border-teal-500;
+}
+
+form button:hover {
+    @apply bg-teal-600;
+}
+
+/* Background Image Optimization */
+.bg-cover {
+    @apply bg-no-repeat bg-center;
+}

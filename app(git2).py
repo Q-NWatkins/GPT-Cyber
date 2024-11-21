@@ -1,76 +1,79 @@
-from flask import Flask, jsonify, request
-from flask_cors import CORS
-from apscheduler.schedulers.background import BackgroundScheduler
+# backend/app.py
+from flask import Flask, render_template, jsonify, request
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 import requests
+from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)
+CORS(app)  # Enable CORS for frontend requests
 
-# Replace with your actual API keys
-ABUSEIPDB_API_KEY = "your_abuseipdb_api_key"
+limiter = Limiter(key_func=get_remote_address, app=app, default_limits=["7 per minute"])
+
+# API Keys
 VIRUSTOTAL_API_KEY = "your_virustotal_api_key"
+ABUSEIPDB_API_KEY = "your_abuseipdb_api_key"
+NEWS_API_KEY = "your_news_api_key"
+COINGECKO_BASE_URL = "https://api.coingecko.com/api/v3"
 
-# Cached data
-cached_search_results = {}
+# Home Page
+@app.route("/")
+def home():
+    return render_template("home.html")
 
-@app.route('/api/news', methods=['GET'])
+# Calendar Page
+@app.route("/calendar")
+def calendar_page():
+    return render_template("calendar.html")
+
+# About Page
+@app.route("/about")
+def about_page():
+    return render_template("about.html")
+
+# Crypto Page
+@app.route("/crypto")
+def crypto_page():
+    return render_template("crypto.html")
+
+# Get News API Endpoint
+@app.route("/get-news", methods=["GET"])
+@limiter.limit("7 per minute")
 def get_news():
-    # For future news sources
-    return jsonify([])  # Empty list
+    query = request.args.get("query", "cybersecurity")
+    date = request.args.get("date")
+    
+    params = {
+        "q": query,
+        "from": date,
+        "to": date,
+        "apiKey": NEWS_API_KEY,
+        "pageSize": 5,
+    }
 
-@app.route('/api/search', methods=['GET'])
-def search():
-    query = request.args.get('query', '').strip().lower()
-    if not query:
-        return jsonify([])
+    response = requests.get("https://newsapi.org/v2/everything", params=params)
+    if response.status_code == 200:
+        news_data = response.json().get("articles", [])
+        return jsonify({"news": [{"title": article["title"], "url": article["url"], "source": article["source"]["name"], "publishedAt": article["publishedAt"]} for article in news_data]})
+    else:
+        return jsonify({"news": []}), response.status_code
 
-    if query in cached_search_results:
-        return jsonify(cached_search_results[query])
+# Get Crypto Data Endpoint
+@app.route("/get-crypto", methods=["GET"])
+@limiter.limit("7 per minute")
+def get_crypto():
+    response = requests.get(f"{COINGECKO_BASE_URL}/coins/markets", params={
+        "vs_currency": "usd",
+        "order": "market_cap_desc",
+        "per_page": 10,
+        "page": 1,
+        "sparkline": False
+    })
+    if response.status_code == 200:
+        crypto_data = response.json()
+        return jsonify({"crypto": crypto_data})
+    else:
+        return jsonify({"crypto": []}), response.status_code
 
-    search_results = []
-    try:
-        # Fetch details from AbuseIPDB
-        print(f"Querying AbuseIPDB for: {query}")
-        abuseipdb_response = requests.get(
-            f'https://api.abuseipdb.com/api/v2/check?ipAddress={query}',
-            headers={'Key': ABUSEIPDB_API_KEY, 'Accept': 'application/json'}
-        )
-        if abuseipdb_response.status_code == 200:
-            abuseipdb_data = abuseipdb_response.json().get('data', {})
-            search_results.append({
-                'title': 'AbuseIPDB Report',
-                'description': abuseipdb_data,
-                'url': f'https://www.abuseipdb.com/check/{query}'
-            })
-            print("AbuseIPDB data received:", abuseipdb_data)
-        else:
-            print("Error with AbuseIPDB:", abuseipdb_response.status_code, abuseipdb_response.text)
-
-        # Fetch threat data from VirusTotal
-        print(f"Querying VirusTotal for: {query}")
-        virustotal_response = requests.get(
-            f'https://www.virustotal.com/api/v3/search?query={query}',
-            headers={'x-apikey': VIRUSTOTAL_API_KEY}
-        )
-        if virustotal_response.status_code == 200:
-            virustotal_data = virustotal_response.json().get('data', [])
-            for item in virustotal_data[:2]:  # Limiting to 2 results
-                search_results.append({
-                    'title': item.get('attributes', {}).get('meaningful_name', 'VirusTotal Report'),
-                    'description': item.get('attributes', {}).get('last_analysis_stats', {}),
-                    'url': f'https://www.virustotal.com/gui/{item["type"]}/{item["id"]}/detection'
-                })
-            print("VirusTotal data received:", virustotal_data)
-        else:
-            print("Error with VirusTotal:", virustotal_response.status_code, virustotal_response.text)
-
-        # Cache results
-        cached_search_results[query] = search_results
-
-    except Exception as e:
-        print("Exception occurred:", e)
-
-    return jsonify(search_results)
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)

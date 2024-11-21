@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.5/main.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.5/main.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="nav-bar">
+        <a href="/">Home</a>
+        <a href="/crypto">Crypto</a>
+        <a href="/calendar">Calendar</a>
+        <a href="/about">About</a>
+    </div>
+
+    <div class="title-container">
+        <h1>Interactive Calendar</h1>
+    </div>
+
+    <div class="calendar-container">
+        <div id="calendar"></div>
+    </div>
+
+    <div id="news-container">
+        <h2>News for Selected Date</h2>
+        <ul id="news-list"></ul>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const calendarEl = document.getElementById('calendar');
+            const newsList = document.getElementById('news-list');
+
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                dateClick: function(info) {
+                    const date = info.dateStr;
+                    fetchNewsForDate(date);
+                }
+            });
+
+            calendar.render();
+
+            function fetchNewsForDate(date) {
+                fetch(`/get-news?date=${date}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        newsList.innerHTML = '';
+                        if (data.news && data.news.length > 0) {
+                            data.news.forEach(item => {
+                                const listItem = document.createElement('li');
+                                listItem.innerHTML = `<a href="${item.url}" target="_blank">${item.title}</a>`;
+                                newsList.appendChild(listItem);
+                            });
+                        } else {
+                            newsList.innerHTML = '<li>No news available for the selected date.</li>';
+                        }
+                    })
+                    .catch(() => {
+                        newsList.innerHTML = '<li>Unable to fetch news. Please try again later.</li>';
+                    });
+            }
+        });
+    </script>
+</body>
+</html>
