@@ -12,11 +12,25 @@ function Home() {
     const fetchNews = async (searchQuery) => {
         setLoading(true);
         setError('');
+        setNews([]); // Clear previous results
+        const formattedDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
         try {
-            const response = await axios.get('/get-news', { params: { query: searchQuery, date: new Date().toISOString().split('T')[0] } });
-            setNews(response.data.news);
+            const response = await axios.get('/get-news', { // Using relative URL due to proxy
+                params: { query: searchQuery, date: formattedDate }
+            });
+
+            if (response.data.news) {
+                setNews(response.data.news);
+            } else if (response.data.message) {
+                setError(response.data.message);
+            } else {
+                setError('No news articles found.');
+            }
+
         } catch (err) {
             setError('Failed to fetch news. Please try again later.');
+            console.error('API Error:', err);
         }
         setLoading(false);
     };
@@ -31,18 +45,18 @@ function Home() {
     return (
         <div className="min-h-screen flex flex-col items-center p-4 bg-cover bg-center relative" style={{ backgroundImage: "url('/images/home-background.jpg')" }}>
             {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-50"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent opacity-60"></div>
             
             {/* Content */}
             <div className="relative z-10 w-full flex flex-col items-center">
-                <header className="w-full flex justify-between items-center mb-8 bg-black bg-opacity-50 p-4 rounded">
-                    <h1 className="text-4xl flex items-center">
+                <header className="w-full flex justify-between items-center mb-8 bg-gray-800 bg-opacity-75 p-4 rounded">
+                    <h1 className="text-4xl flex items-center text-white">
                         <FaShieldAlt className="mr-2 text-teal-400" /> Cybersecurity News
                     </h1>
                     <nav className="flex items-center">
-                        <a href="/calendar" className="mx-2 hover:text-teal-400">Calendar</a>
-                        <a href="/about" className="mx-2 hover:text-teal-400">About</a>
-                        <a href="/crypto" className="mx-2 hover:text-teal-400">Crypto</a>
+                        <a href="/calendar" className="mx-2 text-white hover:text-teal-400">Calendar</a>
+                        <a href="/about" className="mx-2 text-white hover:text-teal-400">About</a>
+                        <a href="/crypto" className="mx-2 text-white hover:text-teal-400">Crypto</a>
                     </nav>
                 </header>
                 <form onSubmit={handleSearch} className="w-full max-w-md flex mb-6">
@@ -51,7 +65,7 @@ function Home() {
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         placeholder="Search for vulnerabilities, breaches..."
-                        className="flex-grow p-2 rounded-l-md bg-gray-800 text-white focus:outline-none"
+                        className="flex-grow p-2 rounded-l-md bg-gray-700 text-white focus:outline-none"
                     />
                     <button type="submit" className="p-2 bg-teal-500 rounded-r-md hover:bg-teal-600 flex items-center">
                         <FaSearch />

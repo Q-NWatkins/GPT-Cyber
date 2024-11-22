@@ -42,10 +42,11 @@ function Crypto() {
         setLoading(true);
         setError('');
         try {
-            const response = await axios.get('/get-crypto');
+            const response = await axios.get('/get-crypto'); // Ensure backend has /get-crypto endpoint
             setCrypto(response.data.crypto);
         } catch (err) {
             setError('Failed to fetch cryptocurrency data.');
+            console.error('Crypto Fetch Error:', err);
         }
         setLoading(false);
     };
@@ -55,20 +56,15 @@ function Crypto() {
         setLoadingChart(true);
         setChartError('');
         try {
-            const response = await axios.get(`https://api.coingecko.com/api/v3/coins/${coinId}/ohlc`, {
-                params: {
-                    vs_currency: 'usd',
-                    days: 30, // Last 30 days
-                },
-            });
+            const response = await axios.get(`/get-ohlc?coin=${coinId}&days=30`); // Ensure backend has /get-ohlc endpoint
 
             if (response.status === 200) {
-                const ohlcData = response.data.map(item => ({
-                    x: item[0],
-                    o: item[1],
-                    h: item[2],
-                    l: item[3],
-                    c: item[4],
+                const ohlcData = response.data.ohlc.map(item => ({
+                    x: item.date,
+                    o: item.open,
+                    h: item.high,
+                    l: item.low,
+                    c: item.close,
                 }));
                 setCandlestickData(ohlcData);
             } else {
@@ -76,6 +72,7 @@ function Crypto() {
             }
         } catch (err) {
             setChartError('Failed to fetch candlestick data.');
+            console.error('OHLC Fetch Error:', err);
         }
         setLoadingChart(false);
     };
@@ -154,72 +151,78 @@ function Crypto() {
 
     return (
         <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center p-4 bg-cover bg-center" style={{ backgroundImage: "url('/images/crypto-background.jpg')" }}>
-            <header className="w-full flex justify-between items-center mb-8 bg-black bg-opacity-50 p-4 rounded">
-                <h1 className="text-4xl flex items-center">
-                    <FaCoins className="mr-2 text-teal-400" /> Cryptocurrency Dashboard
-                </h1>
-                <nav className="flex items-center">
-                    <a href="/" className="mx-2 hover:text-teal-400">Home</a>
-                    <a href="/calendar" className="mx-2 hover:text-teal-400">Calendar</a>
-                    <a href="/about" className="mx-2 hover:text-teal-400">About</a>
-                </nav>
-            </header>
-            {loading ? (
-                <FaSpinner className="animate-spin mb-4 text-teal-400" />
-            ) : error ? (
-                <div className="mb-4 text-red-500 flex items-center">
-                    <FaExclamationTriangle className="mr-2" /> {error}
-                </div>
-            ) : (
-                <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {crypto.map((coin) => (
-                        <div
-                            key={coin.id}
-                            className="p-4 bg-gray-800 rounded-md shadow-md hover:bg-gray-700 transition cursor-pointer"
-                            onClick={() => handleCoinClick(coin)}
-                        >
-                            <h2 className="text-2xl flex items-center mb-2">
-                                <img src={coin.image} alt={coin.name} className="w-6 h-6 mr-2" />
-                                {coin.name} ({coin.symbol.toUpperCase()})
-                            </h2>
-                            <p className="text-lg">Price: <span className="text-teal-400">${coin.current_price.toLocaleString()}</span></p>
-                            <p className="text-lg">Market Cap: <span className="text-teal-400">${coin.market_cap.toLocaleString()}</span></p>
-                            <p className="text-lg">24h Change: 
-                                <span className={coin.price_change_percentage_24h >= 0 ? 'text-green-400' : 'text-red-400'}>
-                                    {coin.price_change_percentage_24h.toFixed(2)}%
-                                </span>
-                            </p>
-                            <p className="text-lg">7d Change: 
-                                <span className={coin.price_change_percentage_7d_in_currency >= 0 ? 'text-green-400' : 'text-red-400'}>
-                                    {coin.price_change_percentage_7d_in_currency ? coin.price_change_percentage_7d_in_currency.toFixed(2) : 'N/A'}%
-                                </span>
-                            </p>
-                            <p className="text-lg">30d Change: 
-                                <span className={coin.price_change_percentage_30d_in_currency >= 0 ? 'text-green-400' : 'text-red-400'}>
-                                    {coin.price_change_percentage_30d_in_currency ? coin.price_change_percentage_30d_in_currency.toFixed(2) : 'N/A'}%
-                                </span>
-                            </p>
-                        </div>
-                    ))}
-                </div>
-            )}
-            {selectedCoin && (
-                <div className="w-full max-w-4xl mt-8 bg-gray-800 p-6 rounded-md shadow-lg">
-                    <h2 className="text-2xl mb-4 flex items-center">
-                        <img src={selectedCoin.image} alt={selectedCoin.name} className="w-8 h-8 mr-2" />
-                        {selectedCoin.name} ({selectedCoin.symbol.toUpperCase()}) - Price Movement (Last 30 Days)
-                    </h2>
-                    {loadingChart ? (
-                        <FaSpinner className="animate-spin mb-4 text-teal-400" />
-                    ) : chartError ? (
-                        <div className="mb-4 text-red-500 flex items-center">
-                            <FaExclamationTriangle className="mr-2" /> {chartError}
-                        </div>
-                    ) : (
-                        <Chart type='candlestick' data={chartData} options={chartOptions} />
-                    )}
-                </div>
-            )}
+            {/* Gradient Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent opacity-60"></div>
+            
+            {/* Content */}
+            <div className="relative z-10 w-full flex flex-col items-center">
+                <header className="w-full flex justify-between items-center mb-8 bg-gray-800 bg-opacity-75 p-4 rounded">
+                    <h1 className="text-4xl flex items-center text-white">
+                        <FaCoins className="mr-2 text-teal-400" /> Cryptocurrency Dashboard
+                    </h1>
+                    <nav className="flex items-center">
+                        <a href="/" className="mx-2 text-white hover:text-teal-400">Home</a>
+                        <a href="/calendar" className="mx-2 text-white hover:text-teal-400">Calendar</a>
+                        <a href="/about" className="mx-2 text-white hover:text-teal-400">About</a>
+                    </nav>
+                </header>
+                {loading ? (
+                    <FaSpinner className="animate-spin mb-4 text-teal-400" />
+                ) : error ? (
+                    <div className="mb-4 text-red-500 flex items-center">
+                        <FaExclamationTriangle className="mr-2" /> {error}
+                    </div>
+                ) : (
+                    <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {crypto.map((coin) => (
+                            <div
+                                key={coin.id}
+                                className="p-4 bg-gray-800 rounded-md shadow-md hover:bg-gray-700 transition cursor-pointer"
+                                onClick={() => handleCoinClick(coin)}
+                            >
+                                <h2 className="text-2xl flex items-center mb-2">
+                                    <img src={coin.image} alt={coin.name} className="w-6 h-6 mr-2" />
+                                    {coin.name} ({coin.symbol.toUpperCase()})
+                                </h2>
+                                <p className="text-lg">Price: <span className="text-teal-400">${coin.current_price.toLocaleString()}</span></p>
+                                <p className="text-lg">Market Cap: <span className="text-teal-400">${coin.market_cap.toLocaleString()}</span></p>
+                                <p className="text-lg">24h Change: 
+                                    <span className={coin.price_change_percentage_24h >= 0 ? 'text-green-400' : 'text-red-400'}>
+                                        {coin.price_change_percentage_24h.toFixed(2)}%
+                                    </span>
+                                </p>
+                                <p className="text-lg">7d Change: 
+                                    <span className={coin.price_change_percentage_7d_in_currency >= 0 ? 'text-green-400' : 'text-red-400'}>
+                                        {coin.price_change_percentage_7d_in_currency ? coin.price_change_percentage_7d_in_currency.toFixed(2) : 'N/A'}%
+                                    </span>
+                                </p>
+                                <p className="text-lg">30d Change: 
+                                    <span className={coin.price_change_percentage_30d_in_currency >= 0 ? 'text-green-400' : 'text-red-400'}>
+                                        {coin.price_change_percentage_30d_in_currency ? coin.price_change_percentage_30d_in_currency.toFixed(2) : 'N/A'}%
+                                    </span>
+                                </p>
+                            </div>
+                        ))}
+                    </div>
+                )}
+                {selectedCoin && (
+                    <div className="w-full max-w-4xl mt-8 bg-gray-800 p-6 rounded-md shadow-lg">
+                        <h2 className="text-2xl mb-4 flex items-center text-white">
+                            <img src={selectedCoin.image} alt={selectedCoin.name} className="w-8 h-8 mr-2" />
+                            {selectedCoin.name} ({selectedCoin.symbol.toUpperCase()}) - Price Movement (Last 30 Days)
+                        </h2>
+                        {loadingChart ? (
+                            <FaSpinner className="animate-spin mb-4 text-teal-400" />
+                        ) : chartError ? (
+                            <div className="mb-4 text-red-500 flex items-center">
+                                <FaExclamationTriangle className="mr-2" /> {chartError}
+                            </div>
+                        ) : (
+                            <Chart type='candlestick' data={chartData} options={chartOptions} />
+                        )}
+                    </div>
+                )}
+            </div>
         </div>
     );
 
